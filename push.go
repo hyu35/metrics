@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
-	"compress/gzip"
 )
 
 // InitPushProcessMetrics sets up periodic push for 'process_*' metrics to the given pushURL with the given interval.
@@ -122,7 +120,7 @@ func InitPushExt(pushURL string, interval time.Duration, extraLabels string, wri
 		ticker := time.NewTicker(interval)
 		var bb bytes.Buffer
 		var tmpBuf []byte
-		zw := gzip.NewWriter(&bb)
+		//zw := gzip.NewWriter(&bb)
 		for range ticker.C {
 			bb.Reset()
 			writeMetrics(&bb)
@@ -134,14 +132,15 @@ func InitPushExt(pushURL string, interval time.Duration, extraLabels string, wri
 				}
 			}
 			tmpBuf = append(tmpBuf[:0], bb.Bytes()...)
-			bb.Reset()
-			zw.Reset(&bb)
-			if _, err := zw.Write(tmpBuf); err != nil {
-				panic(fmt.Errorf("BUG: cannot write %d bytes to gzip writer: %s", len(tmpBuf), err))
-			}
-			if err := zw.Close(); err != nil {
-				panic(fmt.Errorf("BUG: cannot flush metrics to gzip writer: %s", err))
-			}
+			fmt.Println(1, bb.String())
+			//bb.Reset()
+			//zw.Reset(&bb)
+			//if _, err := zw.Write(tmpBuf); err != nil {
+			//	panic(fmt.Errorf("BUG: cannot write %d bytes to gzip writer: %s", len(tmpBuf), err))
+			//}
+			//if err := zw.Close(); err != nil {
+			//	panic(fmt.Errorf("BUG: cannot flush metrics to gzip writer: %s", err))
+			//}
 			pushesTotal.Inc()
 			blockLen := bb.Len()
 			bytesPushedTotal.Add(blockLen)
@@ -151,7 +150,7 @@ func InitPushExt(pushURL string, interval time.Duration, extraLabels string, wri
 				panic(fmt.Errorf("BUG: metrics.push: cannot initialize request for metrics push to %q: %w", pushURLRedacted, err))
 			}
 			req.Header.Set("Content-Type", "text/plain")
-			req.Header.Set("Content-Encoding", "gzip")
+			//req.Header.Set("Content-Encoding", "gzip")
 			startTime := time.Now()
 			resp, err := c.Do(req)
 			pushDuration.UpdateDuration(startTime)
