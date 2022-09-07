@@ -146,7 +146,7 @@ func InitPushExt(pushURL string, interval time.Duration, extraLabels string, wri
 			blockLen := bb.Len()
 			bytesPushedTotal.Add(blockLen)
 			pushBlockSize.Update(float64(blockLen))
-			req, err := http.NewRequest("GET", pushURL, &bb)
+			req, err := http.NewRequest("POST", pushURL, &bb)
 			if err != nil {
 				panic(fmt.Errorf("BUG: metrics.push: cannot initialize request for metrics push to %q: %w", pushURLRedacted, err))
 			}
