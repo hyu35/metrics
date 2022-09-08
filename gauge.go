@@ -75,5 +75,5 @@ func GetOrCreateGaugeWithFunc(name string, f func() float64) *Gauge {
 }
 
 func GetOrCreateGauge(name string) *Gauge {
-	return defaultSet.GetOrCreateGauge(name, nil)
+	return GetOrCreateGaugeWithFunc(name, nil)
 }
