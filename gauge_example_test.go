@@ -22,7 +22,7 @@ func ExampleGauge_vec() {
 		// Dynamically construct metric name and pass it to GetOrCreateGauge.
 		name := fmt.Sprintf(`metric{label1=%q, label2="%d"}`, "value1", i)
 		iLocal := i
-		metrics.GetOrCreateGauge(name, func() float64 {
+		metrics.GetOrCreateGaugeWithFunc(name, func() float64 {
 			return float64(iLocal + 1)
 		})
 	}
@@ -30,7 +30,7 @@ func ExampleGauge_vec() {
 	// Read counter values.
 	for i := 0; i < 3; i++ {
 		name := fmt.Sprintf(`metric{label1=%q, label2="%d"}`, "value1", i)
-		n := metrics.GetOrCreateGauge(name, func() float64 { return 0 }).Get()
+		n := metrics.GetOrCreateGaugeWithFunc(name, func() float64 { return 0 }).Get()
 		fmt.Println(n)
 	}
 

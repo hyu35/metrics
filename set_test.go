@@ -139,7 +139,7 @@ func TestRegisterUnregister(t *testing.T) {
 				UnregisterMetric(histogram)
 
 				gauge := fmt.Sprintf(`gauge{iteration="%d"}`, iteration)
-				GetOrCreateGauge(gauge, func() float64 { return 1 })
+				GetOrCreateGaugeWithFunc(gauge, func() float64 { return 1 })
 				UnregisterMetric(gauge)
 
 				summary := fmt.Sprintf(`summary{iteration="%d"}`, iteration)

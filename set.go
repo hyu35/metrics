@@ -272,9 +272,9 @@ func (s *Set) GetOrCreateGauge(name string, f func() float64) *Gauge {
 	s.mu.Unlock()
 	if nm == nil {
 		// Slow path - create and register missing gauge.
-		if f == nil {
-			panic(fmt.Errorf("BUG: f cannot be nil"))
-		}
+		//if f == nil {
+		//	panic(fmt.Errorf("BUG: f cannot be nil"))
+		//}
 		if err := validateMetric(name); err != nil {
 			panic(fmt.Errorf("BUG: invalid metric name %q: %s", name, err))
 		}

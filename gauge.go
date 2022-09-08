@@ -29,15 +29,23 @@ func NewGauge(name string, f func() float64) *Gauge {
 // See also Counter, which could be used as a gauge with Set and Dec calls.
 type Gauge struct {
 	f func() float64
+	n float64
 }
 
 // Get returns the current value for g.
 func (g *Gauge) Get() float64 {
+	if g.f == nil {
+		return g.n
+	}
 	return g.f()
 }
 
+func (g *Gauge) Update(n float64) {
+	g.n = n
+}
+
 func (g *Gauge) marshalTo(prefix string, w io.Writer) {
-	v := g.f()
+	v := g.Get()
 	if float64(int64(v)) == v {
 		// Marshal integer values without scientific notation
 		fmt.Fprintf(w, "%s %d\n", prefix, int64(v))
@@ -62,6 +70,10 @@ func (g *Gauge) marshalTo(prefix string, w io.Writer) {
 // Performance tip: prefer NewGauge instead of GetOrCreateGauge.
 //
 // See also FloatCounter for working with floating-point values.
-func GetOrCreateGauge(name string, f func() float64) *Gauge {
+func GetOrCreateGaugeWithFunc(name string, f func() float64) *Gauge {
 	return defaultSet.GetOrCreateGauge(name, f)
+}
+
+func GetOrCreateGauge(name string) *Gauge {
+	return defaultSet.GetOrCreateGauge(name, nil)
 }
