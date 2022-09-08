@@ -2,7 +2,7 @@ package metrics_test
 
 import (
 	"fmt"
-	"github.com/VictoriaMetrics/metrics"
+	"github.com/hyu35/metrics"
 )
 
 func ExampleFloatCounter() {

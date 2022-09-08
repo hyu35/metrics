@@ -3,7 +3,7 @@ package metrics_test
 import (
 	"net/http"
 
-	"github.com/VictoriaMetrics/metrics"
+	"github.com/hyu35/metrics"
 )
 
 func ExampleWritePrometheus() {

@@ -11,7 +11,7 @@ func TestGaugeError(t *testing.T) {
 		NewGauge("NewGauge_nil_callback", nil)
 	})
 	expectPanic(t, "GetOrCreateGauge_nil_callback", func() {
-		GetOrCreateGauge("GetOrCreateGauge_nil_callback", nil)
+		GetOrCreateGaugeWithFunc("GetOrCreateGauge_nil_callback", nil)
 	})
 }
 
