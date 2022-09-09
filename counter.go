@@ -52,6 +52,10 @@ func (c *Counter) Set(n uint64) {
 	atomic.StoreUint64(&c.n, n)
 }
 
+func (c *Counter) Reset() {
+	atomic.StoreUint64(&c.n, 0)
+}
+
 // marshalTo marshals c with the given prefix to w.
 func (c *Counter) marshalTo(prefix string, w io.Writer) {
 	v := c.Get()

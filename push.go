@@ -106,71 +106,49 @@ func InitPushExt(pushURL string, interval time.Duration, extraLabels string, wri
 	if pu.Host == "" {
 		return fmt.Errorf("missing host in pushURL=%q", pushURL)
 	}
-	pushURLRedacted := pu.Redacted()
-	c := &http.Client{
-		Timeout: interval,
-	}
-	pushesTotal := pushMetrics.GetOrCreateCounter(fmt.Sprintf(`metrics_push_total{url=%q}`, pushURLRedacted))
-	pushErrorsTotal := pushMetrics.GetOrCreateCounter(fmt.Sprintf(`metrics_push_errors_total{url=%q}`, pushURLRedacted))
-	bytesPushedTotal := pushMetrics.GetOrCreateCounter(fmt.Sprintf(`metrics_push_bytes_pushed_total{url=%q}`, pushURLRedacted))
-	pushDuration := pushMetrics.GetOrCreateHistogram(fmt.Sprintf(`metrics_push_duration_seconds{url=%q}`, pushURLRedacted))
-	pushBlockSize := pushMetrics.GetOrCreateHistogram(fmt.Sprintf(`metrics_push_block_size_bytes{url=%q}`, pushURLRedacted))
-	pushMetrics.GetOrCreateFloatCounter(fmt.Sprintf(`metrics_push_interval_seconds{url=%q}`, pushURLRedacted)).Set(interval.Seconds())
 	go func() {
 		ticker := time.NewTicker(interval)
-		var bb bytes.Buffer
-		var tmpBuf []byte
 		//zw := gzip.NewWriter(&bb)
 		for range ticker.C {
-			bb.Reset()
-			writeMetrics(&bb)
-			if len(extraLabels) > 0 {
-				tmpBuf = addExtraLabels(tmpBuf[:0], bb.Bytes(), extraLabels)
-				bb.Reset()
-				if _, err := bb.Write(tmpBuf); err != nil {
-					panic(fmt.Errorf("BUG: cannot write %d bytes to bytes.Buffer: %s", len(tmpBuf), err))
-				}
-			}
-			tmpBuf = append(tmpBuf[:0], bb.Bytes()...)
-			fmt.Println(1, bb.String())
-			//bb.Reset()
-			//zw.Reset(&bb)
-			//if _, err := zw.Write(tmpBuf); err != nil {
-			//	panic(fmt.Errorf("BUG: cannot write %d bytes to gzip writer: %s", len(tmpBuf), err))
-			//}
-			//if err := zw.Close(); err != nil {
-			//	panic(fmt.Errorf("BUG: cannot flush metrics to gzip writer: %s", err))
-			//}
-			pushesTotal.Inc()
-			blockLen := bb.Len()
-			bytesPushedTotal.Add(blockLen)
-			pushBlockSize.Update(float64(blockLen))
-			req, err := http.NewRequest("POST", pushURL, &bb)
-			if err != nil {
-				panic(fmt.Errorf("BUG: metrics.push: cannot initialize request for metrics push to %q: %w", pushURLRedacted, err))
-			}
-			req.Header.Set("Content-Type", "text/plain")
-			//req.Header.Set("Content-Encoding", "gzip")
-			startTime := time.Now()
-			resp, err := c.Do(req)
-			pushDuration.UpdateDuration(startTime)
-			if err != nil {
-				log.Printf("ERROR: metrics.push: cannot push metrics to %q: %s", pushURLRedacted, err)
-				pushErrorsTotal.Inc()
-				continue
-			}
-			if resp.StatusCode/100 != 2 {
-				body, _ := ioutil.ReadAll(resp.Body)
-				_ = resp.Body.Close()
-				log.Printf("ERROR: metrics.push: unexpected status code in response from %q: %d; expecting 2xx; response body: %q",
-					pushURLRedacted, resp.StatusCode, body)
-				pushErrorsTotal.Inc()
-				continue
-			}
-			_ = resp.Body.Close()
+			DoPush(pushURL, extraLabels, interval, writeMetrics)
 		}
 	}()
 	return nil
+}
+
+func DoPush(pushURL, extraLabels string, interval time.Duration, writeMetrics func(w io.Writer)) {
+	var bb bytes.Buffer
+	var tmpBuf []byte
+	bb.Reset()
+	writeMetrics(&bb)
+	if len(extraLabels) > 0 {
+		tmpBuf = addExtraLabels(tmpBuf[:0], bb.Bytes(), extraLabels)
+		bb.Reset()
+		if _, err := bb.Write(tmpBuf); err != nil {
+			panic(fmt.Errorf("BUG: cannot write %d bytes to bytes.Buffer: %s", len(tmpBuf), err))
+		}
+	}
+	tmpBuf = append(tmpBuf[:0], bb.Bytes()...)
+	fmt.Println(1, bb.String())
+	req, err := http.NewRequest("POST", pushURL, &bb)
+	if err != nil {
+		panic(fmt.Errorf("BUG: metrics.push: cannot initialize request for metrics push to %q: %w", pushURL, err))
+	}
+	req.Header.Set("Content-Type", "text/plain")
+	c := &http.Client{
+		Timeout: interval,
+	}
+
+	//req.Header.Set("Content-Encoding", "gzip")
+	resp, err := c.Do(req)
+	if resp.StatusCode/100 != 2 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		log.Printf("ERROR: metrics.push: unexpected status code in response from %q: %d; expecting 2xx; response body: %q",
+			pushURL, resp.StatusCode, body)
+		return
+	}
+	_ = resp.Body.Close()
 }
 
 var pushMetrics = NewSet()
