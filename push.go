@@ -129,7 +129,7 @@ func DoPush(pushURL, extraLabels string, interval time.Duration, writeMetrics fu
 		}
 	}
 	tmpBuf = append(tmpBuf[:0], bb.Bytes()...)
-	//fmt.Println(1, bb.String())
+	fmt.Println(1, bb.String())
 	req, err := http.NewRequest("POST", pushURL, &bb)
 	if err != nil {
 		panic(fmt.Errorf("BUG: metrics.push: cannot initialize request for metrics push to %q: %w", pushURL, err))

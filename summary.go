@@ -200,7 +200,11 @@ func addTag(name, tag string) string {
 	if len(name) == 0 || name[len(name)-1] != '}' {
 		return fmt.Sprintf("%s{%s}", name, tag)
 	}
-	return fmt.Sprintf("%s,%s}", name[:len(name)-1], tag)
+	if name[len(name)-2] != '{' {
+		return fmt.Sprintf("%s,%s}", name[:len(name)-1], tag)
+	} else {
+		return fmt.Sprintf("%s%s}", name[:len(name)-1], tag)
+	}
 }
 
 func registerSummaryLocked(sm *Summary) {
