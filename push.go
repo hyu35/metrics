@@ -140,6 +140,10 @@ func DoPush(pushURL, extraLabels string, interval time.Duration, writeMetrics fu
 
 	//req.Header.Set("Content-Encoding", "gzip")
 	resp, err := c.Do(req)
+	if err != nil {
+		log.Printf("do call error %v", err)
+		return
+	}
 	if resp.StatusCode/100 != 2 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		_ = resp.Body.Close()
